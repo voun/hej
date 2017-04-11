@@ -1,0 +1,26 @@
+option solver cplex;
+option eexit -9999;
+
+commands greedy.run;
+model simplex.mod;
+fix z;
+param opt default 0;
+
+repeat outer_loop
+{
+	for{t in 1..100}
+	{
+		reset data x;
+		let z[t] := (z[t]+1) mod 2;
+		solve;
+		let opt := Cost;
+		if opt < tot_cost && solve_result_num != 299 then
+		{
+			let tot_cost := opt;
+			continue outer_loop;
+		}
+		let z[t] := (z[t]+1) mod 2;
+	}
+	break;
+}
+display tot_cost;

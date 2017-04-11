@@ -1,0 +1,59 @@
+
+set Components;
+param tot_cost default 0;
+param T;	# the number of time steps in the model
+param d; #{1..T};		# costs of a maintenance occasion at time steps
+param c{Components}; #param c{Components,1..T};	# costs of a new components at time steps
+param minalpha default 999;
+param indi default 0;
+param indt default 0;
+param U{Components};
+var x{Components,1..T} default 0;
+param cost{Components} default 0; #param cost{Components,1..T} default 0; # default istället för =
+param alpha{Components} default 0; #param alpha{Components,1..T} default 0;
+var z{1..T} := 0;
+data test.dat;
+
+set I default {};
+set X{i in Components,t in 1..T} default{};
+param counter default 0;
+
+for {i in Components, ell in 0..T-U[i]}
+{
+	let counter := counter+1;
+	for{t in ell+1..U[i]+ell}
+	{
+		let X[i,t] :=  X[i,t] union {counter};
+	}		
+}
+set S  = 1..counter;
+
+repeat while card(I) < card(S) 
+{	
+	
+	for {i in Components,t in 1..T}
+	{
+		let cost[i] := c[i]+(1-z[t])*d; #lägg till t i cost och c och d
+	}
+	for {i in Components,t in 1..T}
+	{
+		
+		if (card(X[i,t] diff I)) != 0 then
+			let alpha[i] := cost[i]/(card(X[i,t] diff I)); #lägg till t i alpha och cost
+		else
+			let alpha[i] := 999; #lägg till t
+		if alpha[i] < minalpha then #lägg till t
+		{
+			let indi := i;
+			let indt := t;
+			let minalpha := alpha[i]; #lägg till t
+		}
+	}
+	let minalpha := 999;
+	let tot_cost := tot_cost+cost[indi]; #lägg till indt i cost;
+	let I := I union X[indi,indt];	
+	let x[indi,indt] := 1;
+	let z[indt] := 1;
+};
+display tot_cost;
+
