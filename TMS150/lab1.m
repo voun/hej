@@ -24,8 +24,9 @@ plot(x,y,x,x)
 
 %D is test statistic. Performs Kolmogorov-Smirnov goodness of fit test.
 %reject null hypothesis if D > 0.136. 5% sign level, otherwise accept
-D=max(abs(normcdf(X,phat(1),phat(2))-(1:N)./N))
+%D=max(abs(normcdf(X,phat(1),phat(2))-(1:N)./N))
 a=0.136
+[h,p] = chi2gof(X)
 
 %% Assignemnt 1.1 continued
 clc;clf;clear
@@ -50,6 +51,8 @@ plot(x,y,x,x);
 
 D=max(abs(normcdf(X,phat(1),phat(2))-(1:N)./N))
 a=0.136
+
+[h,p] = chi2gof(X) % kollar om X är normalfördelad (med estimerade parametrar)
 
 %% Assignment 1.2
 clf;clc;clear
