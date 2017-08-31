@@ -61,8 +61,8 @@ avgSum=0;
 for i=1:M
     X = normrnd(0,1,[1,N]);
     [muhat,sigmahat,muci,sigmaci] = normfit(X,alpha);
-    avgSum=avgSum+sigmaci(2)-sigmaci(1);
-    if sigmaci(1) < 1 && sigmaci(2) > 1
+    avgSum=avgSum+sigmaci(2)^2-sigmaci(1)^2;
+    if sigmaci(1)^2 < 1 && sigmaci(2)^2 > 1
         r=r+1;
     end
 end
@@ -225,7 +225,7 @@ alphaMeanVec=zeros(1,M);
 meanVec=zeros(1,M);
 medianVec=zeros(1,M);
 for j=1:M
-    X=zeros(1,M);
+    X=zeros(1,N);
     for i=1:N
         if rand(1) <= 0.95
             X(1,i) = normrnd(0,1);
