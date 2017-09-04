@@ -1,0 +1,10 @@
+#!/bin/sh
+
+java -cp bin Main "Lab1.map" 2 20 15 &
+java -cp bin Main "Lab1.map" 20 20 15 &
+java -cp bin Main "Lab1.map" 7 6 15 &
+java -cp bin Main "Lab1.map" 12 6 15 &
+java -cp bin Main "Lab1.map" 20 2 15 &
+java -cp bin Main "Lab1.map" 16 4 15 &
+java -cp bin Main "Lab1.map" 10 15 15 &
+java -cp bin Main "Lab1.map" 10 10 15 &
