@@ -1,0 +1,78 @@
+Choice of critical sections:
+The first critical section is the track from (17,3) to (17,7) guarded by semaphore s1. 
+The second critical section lies between (17,7) and (15,9) guarded by s3. 
+The third critical section is the upper track between (15,9) and (4,9) guarded by semaphore s2. 
+The fourth lies between (4,9) and (3,11) guarded by semaphore s4. The fifth lies between 
+(3,11) and (18,11) guarded by semaphore s5. The sixth and final critical section is 
+the crossing between the two tracks at (8,7) guarded by semaphore s6. 
+
+Our solution works as follows; The trains have a default track on which the critical
+sections lie. If the default track is already occupied, the train must either wait or choose 
+another track. A train knows if a critical section is occupied or not by asking the semaphore associated 
+with that critical section. When a train leaves a critical section it tells the semaphore 
+associated with that section that it has just left, and therefore another train can enter. 
+
+The sensors are placed as follows: at each station, each track, there is a sensor.
+On each track leading into a critical section there is a sensor. Each train has an 
+instance variable dir that keeps track of which direction it is going. The direction changes 
+when the train reaches a station. When a train reaches a certain sensor its actions 
+depend in part on its direction. In some cases, it will also depend on which sensor we 
+activated previously. 
+
+Let us call the upper station A, and the lower station B. Suppose a train is moving 
+from A to B and hits the sensor at (13,7). It asks s3 if there are any available permits. 
+If there is an available permit, then we take it, set the switch to the correct direction and 
+the keep going. If there are none, then it stops and waits until a permit 
+becomes available. It also releases the semaphore s6. If the train is moving in the other 
+direction (i.e. from B to A), then it asks s6 if there are any available permits. 
+If there is a permit available, then we take it and keep going. If no permit is available, 
+then the train stops and waits until a permit becomes available. It also releases 
+the semaphore s3. Note that all semaphores initially have one available permit, except 
+s1 and s5 that start out with zero available permits, since the train start at the 
+critical sections corresponding to s1 and s5. 
+
+Now consider the situation around the sensor with coordinates (19,9). If a train is 
+moving from A to B and the previous sensor was the sensor with coordinates (13,7), we 
+release the semaphore s1. If the previous sensor was the sensor with coordinates 
+(13,8) we do not need to release any semaphores. We ask s2 if any permits are available. 
+If there is a permit available, we take it, set the switch at (15,9) to the right  
+and keep going. If there is no permit available, we set switch at (15,9) to the left 
+and take the lower track. If the train is moving from B to A the situation is similar.
+
+Consider the sensor at station A with coordinates (13,3) (the sensor on the upper track). 
+If the train arrives at A, having started from B, we stop and wait for 1-2 seconds, and 
+then change direction and accelerate to the default speed. 
+
+The maximal speed in this solution is 22. If we try to run the program with higher 
+speeds the trains will not be able to stop fast enough when hitting a sensor that 
+tells it stop.
+
+We tested the solution by running the following bash script:
+
+********************************************************************************
+
+	#!/bin/sh
+
+	java -cp bin Main "Lab1.map" 2 20 15 &
+	java -cp bin Main "Lab1.map" 20 20 15 &
+	java -cp bin Main "Lab1.map" 7 6 15 &
+	java -cp bin Main "Lab1.map" 12 6 15 &
+	java -cp bin Main "Lab1.map" 20 2 15 &
+	java -cp bin Main "Lab1.map" 16 4 15 &
+	java -cp bin Main "Lab1.map" 10 15 15 &
+	java -cp bin Main "Lab1.map" 10 10 15 &
+	java -cp bin Main "Lab1.map" 5 22 15 &
+	java -cp bin Main "Lab1.map" 22 5 15 &
+	java -cp bin Main "Lab1.map" 22 22 15 &
+	java -cp bin Main "Lab1.map" 22 10 15 &
+	java -cp bin Main "Lab1.map" 22 17 15 &
+	java -cp bin Main "Lab1.map" 10 22 15 &
+	java -cp bin Main "Lab1.map" 17 22 15 &
+	java -cp bin Main "Lab1.map" 1 1 15 &
+
+********************************************************************************
+
+Running this for a couple of minutes without getting any collisions or other problems 
+we conclude that our solution is correct with a maximum speed of 22.
+
+

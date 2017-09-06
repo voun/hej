@@ -8,3 +8,11 @@ java -cp bin Main "Lab1.map" 20 2 15 &
 java -cp bin Main "Lab1.map" 16 4 15 &
 java -cp bin Main "Lab1.map" 10 15 15 &
 java -cp bin Main "Lab1.map" 10 10 15 &
+java -cp bin Main "Lab1.map" 5 22 15 &
+java -cp bin Main "Lab1.map" 22 5 15 &
+java -cp bin Main "Lab1.map" 22 22 15 &
+java -cp bin Main "Lab1.map" 22 10 15 &
+java -cp bin Main "Lab1.map" 22 17 15 &
+java -cp bin Main "Lab1.map" 10 22 15 &
+java -cp bin Main "Lab1.map" 17 22 15 &
+java -cp bin Main "Lab1.map" 1 1 15 &
