@@ -32,3 +32,4 @@ hist(trimmedMean, col = "blue",100)
 cat(" 25 and 975 of mean",meanVec[25]," ",meanVec[975])
 cat(" 25 and 975 of trimmedmean",trimmedMean[25]," ",trimmedMean[975])
 cat(" 25 and 975 of median",median[25]," ",median[975])
+

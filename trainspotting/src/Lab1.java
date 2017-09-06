@@ -1,7 +1,7 @@
 import TSim.*;
 import java.util.concurrent.Semaphore;
 
-public class Lab1 
+public class Lab1
 {
 	private TSimInterface tsim = TSimInterface.getInstance();
 	private Semaphore s1 = new Semaphore(0); //Train starts at this semaphore, so initially no available permits
@@ -10,17 +10,17 @@ public class Lab1
 	private Semaphore s4 = new Semaphore(1);
 	private Semaphore s5 = new Semaphore(0); //Train starts at this semaphore, so initially no available permits
 	private Semaphore s6 = new Semaphore(1);
-	private int Coord[][] = {{13,3}, {13,5}, {13,7}, {19,9}, {13,8}, {12,9}, 
-									{7,9}, {1,9}, {6,11}, {5,13}, {13,13}, {13,11}, 
+	private int Coord[][] = {{13,3}, {13,5}, {13,7}, {19,9}, {13,8}, {12,9},
+									{7,9}, {1,9}, {6,11}, {5,13}, {13,13}, {13,11},
 									{6,10}, {13,10}, {6,5}, {9,5}}; //Coordinates of sensors
-	
-  public Lab1(Integer speed1, Integer speed2) throws InterruptedException 
+
+  public Lab1(Integer speed1, Integer speed2)
   {
       Train train1 = new Train(speed1,true,1);
-	  Train train2 = new Train(speed2,false,2);  
+	  Train train2 = new Train(speed2,false,2);
 	  train1.start();train2.start();
   }
-    
+
     class Train extends Thread // Inner class
     {
     	private int speed;
@@ -28,8 +28,8 @@ public class Lab1
     	private int id;
     	private int prevSensX;
     	private int prevSensY;
-    	
-    	public Train(int speed, boolean dir, int id) throws InterruptedException
+
+    	public Train(int speed, boolean dir, int id)
     	{
     		this.speed = speed;
     		this.id = id;
@@ -56,7 +56,7 @@ public class Lab1
     						sleep(1000+20*Math.abs(speed));
     						speed = -speed;
     						tsim.setSpeed(id, speed);
-    						dir = !dir;	
+    						dir = !dir;
     					}
     					prevSens(sensor);
     				}
@@ -69,7 +69,7 @@ public class Lab1
     						speed = -speed;
     						tsim.setSpeed(id, speed);
     						dir = !dir;
-    					}	
+    					}
     					prevSens(sensor);
     				}
     				else if (sensor.getXpos() == Coord[2][0] && sensor.getYpos() == Coord[2][1]) //T3
@@ -97,8 +97,8 @@ public class Lab1
     							tsim.setSpeed(id, 0);
     							s6.acquire();
     							tsim.setSpeed(id, speed);
-    						}							
-    					}			
+    						}
+    					}
     					prevSens(sensor);
     				}
     				else if (sensor.getXpos() == Coord[3][0] && sensor.getYpos() == Coord[3][1]) //T4
@@ -106,7 +106,7 @@ public class Lab1
     					if (dir)
     					{
     						if(prevSensX == Coord[2][0] && prevSensY == Coord[2][1])
-    							s1.release();	
+    							s1.release();
     						if(s2.tryAcquire())
     							tsim.setSwitch(15, 9, TSimInterface.SWITCH_RIGHT);
     						else
@@ -135,8 +135,8 @@ public class Lab1
     							tsim.setSpeed(id, 0);
     							s3.acquire();
     							tsim.setSwitch(17, 7, TSimInterface.SWITCH_LEFT);
-    							tsim.setSpeed(id, speed);	
-    						}	
+    							tsim.setSpeed(id, speed);
+    						}
     					}
     					else
     					{
@@ -148,7 +148,7 @@ public class Lab1
     							tsim.setSpeed(id, 0);
     							s6.acquire();
     							tsim.setSpeed(id, speed);
-    						}							
+    						}
     					}
     					prevSens(sensor);
     				}
@@ -165,9 +165,9 @@ public class Lab1
     							tsim.setSpeed(id, 0);
     							s3.acquire();
     							tsim.setSwitch(15, 9, TSimInterface.SWITCH_RIGHT);
-    							tsim.setSpeed(id, speed);		
+    							tsim.setSpeed(id, speed);
     						}
-    						prevSens(sensor);								
+    						prevSens(sensor);
     					}
     				}
     				else if(sensor.getXpos() == Coord[6][0] && sensor.getYpos() == Coord[6][1]) //T7
@@ -181,8 +181,8 @@ public class Lab1
     							tsim.setSpeed(id, 0);
     							s4.acquire();
     							tsim.setSwitch(4, 9, TSimInterface.SWITCH_LEFT);
-    							tsim.setSpeed(id, speed);	
-    						}		
+    							tsim.setSpeed(id, speed);
+    						}
     					}
     					else
     						s4.release();
@@ -197,21 +197,21 @@ public class Lab1
     						if(s5.tryAcquire())
     							tsim.setSwitch(3, 11, TSimInterface.SWITCH_LEFT);
     						else
-    							tsim.setSwitch(3, 11, TSimInterface.SWITCH_RIGHT);			
+    							tsim.setSwitch(3, 11, TSimInterface.SWITCH_RIGHT);
     					}
     					else
     					{
     						if(prevSensX == Coord[8][0] && prevSensY == Coord[8][1])
     							s5.release();
-    							
+
     						if(s2.tryAcquire())
     							tsim.setSwitch(4, 9, TSimInterface.SWITCH_LEFT);
     						else
-    							tsim.setSwitch(4, 9, TSimInterface.SWITCH_RIGHT);		
+    							tsim.setSwitch(4, 9, TSimInterface.SWITCH_RIGHT);
     					}
     					prevSens(sensor);
     				}
-   
+
     				else if(sensor.getXpos() == Coord[8][0] && sensor.getYpos() == Coord[8][1]) //T9
     				{
     					if(dir)
@@ -226,7 +226,7 @@ public class Lab1
     							s4.acquire();
     							tsim.setSwitch(3, 11, TSimInterface.SWITCH_LEFT);
     							tsim.setSpeed(id, speed);
-    						}	
+    						}
     					}
     					prevSens(sensor);
     				}
@@ -244,8 +244,8 @@ public class Lab1
     							s4.acquire();
     							tsim.setSwitch(3, 11, TSimInterface.SWITCH_RIGHT);
     							tsim.setSpeed(id, speed);
-    							
-    						}		
+
+    						}
     					}
     					prevSens(sensor);
     				}
@@ -261,7 +261,7 @@ public class Lab1
     					}
     					prevSens(sensor);
     				}
-    		
+
     				else if(sensor.getXpos() == Coord[11][0] && sensor.getYpos() == Coord[11][1]) //T12
     				{
     					if(dir)
@@ -271,7 +271,7 @@ public class Lab1
     						speed = -speed;
     						tsim.setSpeed(id, speed);
     						dir = !dir;
-    					}	
+    					}
     					prevSens(sensor);
     				}
     				else if(sensor.getXpos() == Coord[12][0] && sensor.getYpos() == Coord[12][1]) //T13
@@ -285,8 +285,8 @@ public class Lab1
     							tsim.setSpeed(id, 0);
     							s4.acquire();
     							tsim.setSwitch(4, 9, TSimInterface.SWITCH_RIGHT);
-    							tsim.setSpeed(id, speed);						
-    						}		
+    							tsim.setSpeed(id, speed);
+    						}
     					}
     					else
     						s4.release();
@@ -305,8 +305,8 @@ public class Lab1
     							tsim.setSpeed(id, 0);
     							s3.acquire();
     							tsim.setSwitch(15, 9, TSimInterface.SWITCH_LEFT);
-    							tsim.setSpeed(id, speed);	
-    						}		
+    							tsim.setSpeed(id, speed);
+    						}
     					}
     					prevSens(sensor);
     				}
@@ -326,7 +326,7 @@ public class Lab1
     					else
     						s6.release();
     					prevSens(sensor);
-    				}			
+    				}
     				else if(sensor.getXpos() == Coord[15][0] && sensor.getYpos() == Coord[15][1]) //T16
     				{
     					if(dir)
@@ -343,15 +343,15 @@ public class Lab1
     					else
     						s6.release();
     					prevSens(sensor);
-    				}	
-        		} 		
+    				}
+        		}
     		}catch(InterruptedException e){
     			e.getMessage();
     			System.exit(1);
     		}catch (CommandException e){
     			e.getMessage();
     			System.exit(1);
-    		}	   		
+    		}
     	}
-    }   
+    }
 }
