@@ -11,7 +11,7 @@ for(n in seq(10,100,10))
     w <- c()
     for(j in 1:1000)
     {
-      newSample = sample(x,n,replace=TRUE)
+      newSample = sample(ranGammaSmall,n,replace=TRUE)
       theta1 <- append(theta1,var(newSample))
       t <- c()
       for(k in 1:50)
@@ -20,7 +20,7 @@ for(n in seq(10,100,10))
       w = append(w,((var(newSample)-sampleVar)/se))
     }
     w = sort(w)
-    std = sqrt(var(theta))
+    std = sqrt(var(theta1))
     
     lower = sampleVar-std*w[975]
     upper = sampleVar-std*w[25]
@@ -30,6 +30,8 @@ for(n in seq(10,100,10))
   }
   percentages <- append(percentages,counter/100)
 }
-
+plot(seq(10,100,10),percentages,col="RED",xlab="n",xlim=c(10,100),ylim=c(0.85,1),cex=0.85,pch=19)
+par(new=TRUE)
+plot(seq(0,110,10),rep(0.95,12),col="BLUE",xlim=c(10,100),ylim=c(0.85,1),xlab="",ylab="",axes=FALSE,type="l")
 
 

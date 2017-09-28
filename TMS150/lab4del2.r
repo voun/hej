@@ -26,6 +26,8 @@ for(i in 1:1000)
 bias = mean(theta)-mean(d)
 variance = var(theta)
 
+h = hist(theta,xlab="x",col="BLUE")#theta hat stjerna
+
 mle = c(shape,scale)
 
 statistic <- function(x) mean(x)

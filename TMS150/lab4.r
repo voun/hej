@@ -1,5 +1,5 @@
 ranGamma = rgamma(100,shape=2,scale=2)
-hist(ranGamma)
+hist(ranGamma,col="BLUE")
 
 BSsamplemean <- function (x)
 {
@@ -9,7 +9,9 @@ BSsamplemean <- function (x)
   theta
 }
 bootSample = BSsamplemean(ranGamma)
-hist(bootSample) #theta hat stjerna
+h = hist(bootSample,xlab="x",col="BLUE")#theta hat stjerna
+
+plot(seq(2.5,5,0.001),dgamma(seq(2.5,5,0.001),shape=200,scale=1/50),type="l",col="RED",xlab="x",ylab="density function")
 hist(rgamma(1000,shape=200,scale=1/50)) # theta hat
 bias = mean(bootSample)-mean(ranGamma)
 variance = var(bootSample)
