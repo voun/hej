@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicBoolean;
+import amazed.maze.*;
 
 /**
  * <code>ForkJoinSolver</code> implements a solver for
@@ -31,18 +33,16 @@ public class ForkJoinSolver
     {
         super(maze);
 		this.visited = new ConcurrentSkipListSet<Integer>();
-		this.flag = false;
-		num++;
+		running = new AtomicBoolean(true);
     }
 
 	   
-	public ForkJoinSolver(Maze maze, int start, ConcurrentSkipListSet<Integer> visited,boolean flag)
+	public ForkJoinSolver(Maze maze, int start, ConcurrentSkipListSet<Integer> visited,AtomicBoolean running)
     {
         super(maze);
 		this.start = start;
 		this.visited = visited;	
-		this.flag = flag;	
-		num++;	
+		this.running = running;
     }
 	
     /**
@@ -61,10 +61,7 @@ public class ForkJoinSolver
         this(maze);
         this.forkAfter = forkAfter;
     }
-	private boolean flag;
-	private static volatile boolean running = true;
-	private static int num = 0;
-	private ForkJoinSolver parent;
+	private AtomicBoolean running;
     /**
      * Searches for and returns the path, as a list of node
      * identifiers, that goes from the start node to a goal node in
@@ -79,27 +76,24 @@ public class ForkJoinSolver
     @Override
     public List<Integer> compute()
     {
-		//running = true;
         return parallelDepthFirstSearch();
     }
 
-    private List<Integer> parallelDepthFirstSearch()
+    private List<Integer> parallelDepthFirstSearch() // ändra till concurrentSet i Sequential
     {
-		
-		//System.out.println("hej");
-        int player = maze.newPlayer(start);
+		int player = maze.newPlayer(start);
         frontier.push(start);
-        while (!frontier.empty() && running) 
+        while (!frontier.empty() && running.get()) 
 		{
             int current = frontier.pop();
             if (maze.hasGoal(current)) 
 			{
                 maze.move(player, current);
+				running.set(false);
                 return pathFromTo(start, current);
             }
-            if (flag || visited.add(current)) 
+            if (visited.add(current))
 			{
-				flag = false;
                 maze.move(player, current);
                 for (int nb: maze.neighbors(current)) 
 				{
@@ -107,53 +101,45 @@ public class ForkJoinSolver
                     if (!visited.contains(nb))
                         predecessor.put(nb, current);
                 }
-            }
-
-			Set<Integer> notVisitedNB = maze.neighbors(current);
-			notVisitedNB.removeAll(visited);
-			if (notVisitedNB.size() >= 2)
-			{
-				ArrayList<ForkJoinSolver> list = new ArrayList<ForkJoinSolver>();
-				for(int nb : maze.neighbors(current))
+				Set<Integer> notVisitedNB = maze.neighbors(current);
+				notVisitedNB.removeAll(visited);
+				if (notVisitedNB.size() >= 2)
 				{
-
-					if(visited.add(nb))
+					ArrayList<ForkJoinSolver> list = new ArrayList<ForkJoinSolver>();
+					int me = notVisitedNB.iterator().next();
+					notVisitedNB.remove(me);
+					for(int nb : notVisitedNB)
 					{
-						//System.out.println("hej");
-						ForkJoinSolver solver = new ForkJoinSolver(maze, nb, this.visited,true);
+						ForkJoinSolver solver = new ForkJoinSolver(maze, nb, this.visited,running);
 						solver.fork();
-						list.add(solver);
+						list.add(solver);				
 					}	
-				}	
-				Iterator<ForkJoinSolver> iter = list.iterator(); //cyclic iterator	try{this.wait();}
-				while(iter.hasNext())
-				{
-					//System.out.println(running);
-					ForkJoinSolver solver = iter.next();
-					if(solver.isDone())
+					
+
+					ForkJoinSolver solv = new ForkJoinSolver(maze,me,this.visited,running);
+					List<Integer> path = solv.compute();
+
+					if( path != null)
 					{
-						List<Integer> path = solver.join();
-						if (path.size() > 0)
+						List<Integer> newPath = pathFromTo(start,current);
+						newPath.addAll(path);
+						return newPath;
+					}
+	
+					for(ForkJoinSolver solver : list)
+					{
+						path = solver.join();
+						if (path != null)
 						{
-							running = false;
 							List<Integer> newPath = pathFromTo(start,current);
 							newPath.addAll(path);
 							return newPath;
 						}
-						else
-							iter.remove();
-
-						try{this.wait();}
-						catch(Exception e){}
-					}
-					if(!iter.hasNext()) 
-						iter = list.iterator(); //restart att beginning of list
-				}	
-			return new ArrayList<Integer>();	
-			}
+					}	
+				return null;	
+				}
+            }
         }
-		//System.out.println("hej");
-        return new ArrayList<Integer>();
-		
+        return null;		
     }
 }
