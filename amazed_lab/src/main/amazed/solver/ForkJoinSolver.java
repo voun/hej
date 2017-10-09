@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Stack;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.Iterator;
@@ -34,15 +35,37 @@ public class ForkJoinSolver
         super(maze);
 		this.visited = new ConcurrentSkipListSet<Integer>();
 		running = new AtomicBoolean(true);
+		this.player = maze.newPlayer(start);
+		//this.originalStart = start;
     }
-
-	   
-	public ForkJoinSolver(Maze maze, int start, ConcurrentSkipListSet<Integer> visited,AtomicBoolean running)
+ 
+/**
+	public ForkJoinSolver(Maze maze, int start,int originalstart, Set<Integer> visited,AtomicBoolean running,int forkAfter, int player, Stack<Integer> frontier, Map<Integer, Integer> predecessor) //Not new player
     {
         super(maze);
 		this.start = start;
 		this.visited = visited;	
 		this.running = running;
+		this.player = player;
+		this.forkAfter = forkAfter;
+		this.frontier = frontier;
+		this.predecessor = predecessor;
+		this.originalStart = originalStart;
+    }
+**/
+
+	
+
+	public ForkJoinSolver(Maze maze, int start, Set<Integer> visited,AtomicBoolean running,int forkAfter) //New player
+    {
+        super(maze);
+		this.start = start;
+		this.visited = visited;	
+		this.running = running;
+		this.forkAfter = forkAfter;
+		this.flag = true;
+		this.player = maze.newPlayer(start);
+		//this.originalStart = start;
     }
 	
     /**
@@ -61,7 +84,12 @@ public class ForkJoinSolver
         this(maze);
         this.forkAfter = forkAfter;
     }
+	
+	
+	private boolean flag = false;
 	private AtomicBoolean running;
+	private int player;
+	//private int originalStart;
     /**
      * Searches for and returns the path, as a list of node
      * identifiers, that goes from the start node to a goal node in
@@ -81,7 +109,7 @@ public class ForkJoinSolver
 
     private List<Integer> parallelDepthFirstSearch() // ändra till concurrentSet i Sequential
     {
-		int player = maze.newPlayer(start);
+		int steps = 0;
         frontier.push(start);
         while (!frontier.empty() && running.get()) 
 		{
@@ -92,9 +120,11 @@ public class ForkJoinSolver
 				running.set(false);
                 return pathFromTo(start, current);
             }
-            if (visited.add(current))
+            if (flag || visited.add(current))
 			{
+				flag = false;
                 maze.move(player, current);
+				steps++;
                 for (int nb: maze.neighbors(current)) 
 				{
                     frontier.push(nb);
@@ -103,28 +133,24 @@ public class ForkJoinSolver
                 }
 				Set<Integer> notVisitedNB = maze.neighbors(current);
 				notVisitedNB.removeAll(visited);
-				if (notVisitedNB.size() >= 2)
+				if (notVisitedNB.size() >= 2 && steps >= forkAfter)
 				{
 					ArrayList<ForkJoinSolver> list = new ArrayList<ForkJoinSolver>();
-					int me = notVisitedNB.iterator().next();
-					notVisitedNB.remove(me);
+					notVisitedNB.remove(notVisitedNB.iterator().next());
 					for(int nb : notVisitedNB)
 					{
-						ForkJoinSolver solver = new ForkJoinSolver(maze, nb, this.visited,running);
-						solver.fork();
-						list.add(solver);				
+						if(visited.add(nb))
+						{
+							ForkJoinSolver solver = new ForkJoinSolver(maze, nb, this.visited,running,this.forkAfter);
+							solver.fork();
+							list.add(solver);
+						}						
 					}	
 					
-
-					ForkJoinSolver solv = new ForkJoinSolver(maze,me,this.visited,running);
-					List<Integer> path = solv.compute();
-
+					//ForkJoinSolver solv = new ForkJoinSolver(maze,me,this.originalStart,this.visited,running,this.forkAfter, this.player, this.start, this.frontier, this.predecessor);
+					List<Integer> path = this.compute();
 					if( path != null)
-					{
-						List<Integer> newPath = pathFromTo(start,current);
-						newPath.addAll(path);
-						return newPath;
-					}
+						return path;
 	
 					for(ForkJoinSolver solver : list)
 					{

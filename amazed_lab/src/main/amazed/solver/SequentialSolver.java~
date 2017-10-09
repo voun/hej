@@ -60,7 +60,7 @@ public class SequentialSolver
      */
     protected void initStructures()
     {
-        visited = new ConcurrentSkipListSet<Integer>();
+        visited = new HashSet<>();
         predecessor = new HashMap<>();
         frontier = new Stack<>();
     }

@@ -60,7 +60,7 @@ public class SequentialSolver
      */
     protected void initStructures()
     {
-        visited = new ConcurrentSkipListSet<Integer>();
+        visited = new HashSet<>();
         predecessor = new HashMap<>();
         frontier = new Stack<>();
     }
@@ -81,7 +81,7 @@ public class SequentialSolver
      * Set of identifiers of all nodes visited so far during the
      * search.
      */
-    protected ConcurrentSkipListSet<Integer> visited;
+    protected Set<Integer> visited;
     /**
      * If <code>(m -&gt; n)</code> is in <code>precedessor</code>, then
      * the node with identifier <code>n</code> has been first visited
