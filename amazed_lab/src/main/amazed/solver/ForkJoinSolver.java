@@ -12,160 +12,107 @@ import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicBoolean;
 import amazed.maze.*;
 
-/**
- * <code>ForkJoinSolver</code> implements a solver for
- * <code>Maze</code> objects using a fork/join multi-thread
- * depth-first search.
- * <p>
- * Instances of <code>ForkJoinSolver</code> should be run by a
- * <code>ForkJoinPool</code> object.
- */
 
 public class ForkJoinSolver
     extends SequentialSolver
 {
-    /**
-     * Creates a solver that searches in <code>maze</code> from the
-     * start node to a goal.
-     *
-     * @param maze   the maze to be searched
-     */
+	private boolean justSpawned = false; //True if player just spawned, false otherwise
+	private AtomicBoolean running; //thread-safe boolean. False when someone has found the goal and true otherwise
+	private int player; //player id
+
+   public ForkJoinSolver(Maze maze, int forkAfter)
+    {
+        this(maze);
+        this.forkAfter = forkAfter; //regulates amount of parallelism
+    }
+
     public ForkJoinSolver(Maze maze)
     {
         super(maze);
-		this.visited = new ConcurrentSkipListSet<Integer>();
+		this.visited = new ConcurrentSkipListSet<Integer>(); //thread safe set of visited cells.
 		running = new AtomicBoolean(true);
-		this.player = maze.newPlayer(start);
-		//this.originalStart = start;
+		this.player = maze.newPlayer(start); //spawns a new player on cell with id start
     }
- 
-/**
-	public ForkJoinSolver(Maze maze, int start,int originalstart, Set<Integer> visited,AtomicBoolean running,int forkAfter, int player, Stack<Integer> frontier, Map<Integer, Integer> predecessor) //Not new player
-    {
-        super(maze);
-		this.start = start;
-		this.visited = visited;	
-		this.running = running;
-		this.player = player;
-		this.forkAfter = forkAfter;
-		this.frontier = frontier;
-		this.predecessor = predecessor;
-		this.originalStart = originalStart;
-    }
-**/
-
-	
 
 	public ForkJoinSolver(Maze maze, int start, Set<Integer> visited,AtomicBoolean running,int forkAfter) //New player
     {
+		//set instance variables
         super(maze);
 		this.start = start;
 		this.visited = visited;	
 		this.running = running;
 		this.forkAfter = forkAfter;
-		this.flag = true;
+		this.justSpawned = true; //True since new player. Allows new player to move
 		this.player = maze.newPlayer(start);
-		//this.originalStart = start;
     }
 	
-    /**
-     * Creates a solver that searches in <code>maze</code> from the
-     * start node to a goal, forking after a given number of visited
-     * nodes.
-     *
-     * @param maze        the maze to be searched
-     * @param forkAfter   the number of steps (visited nodes) after
-     *                    which a parallel task is forked; if
-     *                    <code>forkAfter &lt;= 0</code> the solver never
-     *                    forks new tasks
-     */
-    public ForkJoinSolver(Maze maze, int forkAfter)
-    {
-        this(maze);
-        this.forkAfter = forkAfter;
-    }
-	
-	
-	private boolean flag = false;
-	private AtomicBoolean running;
-	private int player;
-	//private int originalStart;
-    /**
-     * Searches for and returns the path, as a list of node
-     * identifiers, that goes from the start node to a goal node in
-     * the maze. If such a path cannot be found (because there are no
-     * goals, or all goals are unreacheable), the method returns
-     * <code>null</code>.
-     *
-     * @return   the list of node identifiers from the start node to a
-     *           goal node in the maze; <code>null</code> if such a path cannot
-     *           be found.
-     */
+
     @Override
     public List<Integer> compute()
     {
         return parallelDepthFirstSearch();
     }
 
-    private List<Integer> parallelDepthFirstSearch() // ändra till concurrentSet i Sequential
+    private List<Integer> parallelDepthFirstSearch()
     {
 		int steps = 0;
         frontier.push(start);
-        while (!frontier.empty() && running.get()) 
+        while (!frontier.empty() && running.get()) //loop when stack of neighbours not empty and when the goal has not been found
 		{
             int current = frontier.pop();
-            if (maze.hasGoal(current)) 
+            if (maze.hasGoal(current)) //checks if next position is goal
 			{
                 maze.move(player, current);
-				running.set(false);
-                return pathFromTo(start, current);
+				running.set(false); //if goal is found, set running to false
+                return pathFromTo(start, current);//return path from player's start position to current position
             }
-            if (flag || visited.add(current))
+            if (justSpawned || visited.add(current)) //checks if next position has already been visited. If not, add it to set of visited nodes.
 			{
-				flag = false;
-                maze.move(player, current);
+				/*Below where we spawn a new thread, we add the node on which we spawn to the set of visited nodes before spawning a new player.
+				So without the flag justSpawned the above if-statement will evaluate to false for new players and they will not be able to move. 
+				We can circumvent this problem by using the boolean justSpawned.*/
+				justSpawned = false; 
+                maze.move(player, current); //moves player to node
 				steps++;
-                for (int nb: maze.neighbors(current)) 
+                for (int nb: maze.neighbors(current)) //adds neighbours to frontier stack
 				{
                     frontier.push(nb);
-                    if (!visited.contains(nb))
+                    if (!visited.contains(nb)) //if neighbour is not in the set, then its predecessor node is the current node.
                         predecessor.put(nb, current);
                 }
-				Set<Integer> notVisitedNB = maze.neighbors(current);
-				notVisitedNB.removeAll(visited);
-				if (notVisitedNB.size() >= 2 && steps >= forkAfter)
+				Set<Integer> notVisitedNB = maze.neighbors(current); //get set of neighbours of current node
+				notVisitedNB.removeAll(visited); //removes visited neighbours
+				if (notVisitedNB.size() >= 2 && steps >= forkAfter) //checks if it is time to fork
 				{
-					ArrayList<ForkJoinSolver> list = new ArrayList<ForkJoinSolver>();
-					notVisitedNB.remove(notVisitedNB.iterator().next());
+					ArrayList<ForkJoinSolver> list = new ArrayList<ForkJoinSolver>(); 
+					notVisitedNB.remove(notVisitedNB.iterator().next()); //removes one element from the set (to make sure that the original thread has room to move)
 					for(int nb : notVisitedNB)
 					{
-						if(visited.add(nb))
+						if(visited.add(nb)) //spawns new threads at neighbours that have not been visited and adds neighbour to set of visited nodes
 						{
 							ForkJoinSolver solver = new ForkJoinSolver(maze, nb, this.visited,running,this.forkAfter);
 							solver.fork();
 							list.add(solver);
 						}						
 					}	
-					
-					//ForkJoinSolver solv = new ForkJoinSolver(maze,me,this.originalStart,this.visited,running,this.forkAfter, this.player, this.start, this.frontier, this.predecessor);
-					List<Integer> path = this.compute();
-					if( path != null)
-						return path;
+					List<Integer> path = this.compute(); //current thread continues search
+					if( path != null) //if path to goal has been found, return it
+						return path; 
 	
 					for(ForkJoinSolver solver : list)
 					{
-						path = solver.join();
-						if (path != null)
+						path = solver.join(); 
+						if (path != null) 
 						{
-							List<Integer> newPath = pathFromTo(start,current);
-							newPath.addAll(path);
+							List<Integer> newPath = pathFromTo(start,current); //path from original start position to forking position
+							newPath.addAll(path); //concatenates newPath with path from forking position to goal.
 							return newPath;
 						}
 					}	
-				return null;	
+				return null; //if no one has found the goal, return null.
 				}
             }
         }
-        return null;		
+        return null; //if stack is empty or running is false, return null.
     }
 }

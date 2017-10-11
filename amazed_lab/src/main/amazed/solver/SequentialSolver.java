@@ -12,7 +12,6 @@ import java.util.Set;
 import java.util.HashSet;
 import java.util.Stack;
 import java.util.Collections;
-import java.util.concurrent.ConcurrentSkipListSet;
 
 /**
  * <code>SequentialSolver</code> implements a solver for
@@ -51,7 +50,6 @@ public class SequentialSolver
         this.start = maze.start();
         initStructures();
     }
-
 
     /**
      * Initializes <code>visited</code>, <code>predecessor</code>, and

@@ -1,0 +1,30 @@
+Andreas Dahlberg & Stefan Areback
+
+In the original sequential search program three data structures are used: set, 
+stack and map. A set is used to keep track of the nodes that have been visited, a 
+stack keeps track of neighbours, and a map to describe the predecessor function, 
+which is used to reconstruct the path from the starting node to the goal. In order 
+to make a parallel variant of this program we have to choose which data structures 
+should be shared between different threads. The only data structure that has to be 
+shared is the set of visited nodes. The thread safe version of set that we use is 
+ConcurrentSkipListSet. 
+
+Our solution runs a depth first search until it has taken at least forkAfter many 
+steps and it stands on a node with at least two unvisited neighbours. When this 
+happens we will spawn new players on all of the unvisited neighbours, except one 
+which is the one that the current player will go to. 
+
+A global boolean variable "running" is used to let all players keep track of 
+whether the goal has been of found or not. If a player finds the goal, running is 
+set to false and all other players will stop searching.
+
+When a player finds the goal, the path from its starting position (forking position) 
+to the goal is concatenated to the path from where the forking player started to the 
+forking position. 
+
+The sequential program first checks if a position is unvisited, and if that is 
+the case it adds that position to the set of visited positions. Doing this when there 
+is more than one thread may result in several players ending up in the same position. 
+We can solve this problem by using the add-method for ConcurrentSkipListSets, which 
+in some sense does the following in one operation: checks if a node is a member of 
+the set, and adds it to the set if it is not a member.
